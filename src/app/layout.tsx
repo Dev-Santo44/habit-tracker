@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { generateFirebaseConfigScript } from "@/lib/firebaseConfigScript";
+import { AuthProvider } from "@/lib/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,22 +18,13 @@ export const metadata: Metadata = {
   description: "An advanced, high-performance habit tracker designed for peak synchronization and personal optimization.",
 };
 
-import { AuthProvider } from "@/lib/AuthContext";
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const firebaseScript = generateFirebaseConfigScript();
-
   return (
     <html lang="en">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{ __html: firebaseScript }}
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

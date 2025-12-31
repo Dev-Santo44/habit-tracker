@@ -7,7 +7,8 @@ import {
     signOut,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    updateProfile
+    updateProfile,
+    getRedirectResult
 } from 'firebase/auth';
 import { auth } from './firebase';
 
@@ -32,6 +33,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setLoading(false);
             return;
         }
+
+        // Handle redirect result from Google Sign-In
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result?.user) {
+                    setUser(result.user);
+                }
+            })
+            .catch((error) => {
+                console.error('Redirect sign-in error:', error);
+            });
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             setLoading(false);

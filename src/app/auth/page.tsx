@@ -7,7 +7,7 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     updateProfile,
-    signInWithPopup,
+    signInWithRedirect,
     GoogleAuthProvider
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -57,11 +57,10 @@ export default function AuthPage() {
                 return;
             }
             const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
-            router.push('/');
+            // Using redirect instead of popup for better domain compatibility
+            await signInWithRedirect(auth, provider);
         } catch (err: any) {
             setError(err.message);
-        } finally {
             setLoading(false);
         }
     };
