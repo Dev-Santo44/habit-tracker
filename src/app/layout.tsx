@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { generateFirebaseConfigScript } from "@/lib/firebaseConfigScript";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,8 +25,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const firebaseScript = generateFirebaseConfigScript();
+
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: firebaseScript }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
