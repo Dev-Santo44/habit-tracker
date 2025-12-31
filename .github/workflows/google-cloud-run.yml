@@ -27,6 +27,14 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
+      - name: 'Create Artifact Registry Repository'
+        run: |
+          gcloud artifacts repositories create cloud-run-source-deploy \
+            --repository-format=docker \
+            --location=us-central1 \
+            --description="Docker repository for Cloud Run" \
+            || true # Ignore error if it already exists
+
       - name: 'Docker Auth'
         run: |-
           gcloud auth configure-docker us-central1-docker.pkg.dev
