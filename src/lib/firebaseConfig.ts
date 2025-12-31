@@ -1,12 +1,21 @@
-// Firebase configuration - uses explicit process.env access for Next.js inlining
+const getEnv = (key: string) => {
+    // 1. Check window object for runtime injection (The reliable Cloud Run method)
+    if (typeof window !== 'undefined' && (window as any).ENV) {
+        return (window as any).ENV[key];
+    }
+
+    // 2. Fallback to process.env (Local dev & Build time)
+    return process.env[key];
+};
+
 const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
-    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ''
+    apiKey: getEnv("NEXT_PUBLIC_FIREBASE_API_KEY"),
+    authDomain: getEnv("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"),
+    projectId: getEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID"),
+    storageBucket: getEnv("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"),
+    messagingSenderId: getEnv("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
+    appId: getEnv("NEXT_PUBLIC_FIREBASE_APP_ID"),
+    measurementId: getEnv("NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID")
 };
 
 export default firebaseConfig;
