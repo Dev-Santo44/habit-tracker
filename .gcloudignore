@@ -1,0 +1,12 @@
+.git/
+node_modules/
+.next/
+.env*
+data.json
+README.md
+CONTRIBUTING.md
+LICENSE
+.gcloudignore
+.gitignore
+**/node_modules/**
+**/.next/**
