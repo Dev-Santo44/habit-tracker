@@ -34,12 +34,12 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN addgroup --system --fullname nodejs nodegroup
-RUN adduser --system --fullname nextjs nodeuser
+RUN addgroup -S nodejs -g 1001
+RUN adduser -S nextjs -u 1001
 
 COPY --from=builder /app/public ./public
 
@@ -52,7 +52,7 @@ USER nextjs
 
 EXPOSE 8080
 
-ENV PORT 8080
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=8080
+ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
