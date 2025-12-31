@@ -1,5 +1,12 @@
 const getEnv = (key: string) => {
-    const val = process.env[key];
+    // Check process.env first (build-time and server-side)
+    let val = process.env[key];
+
+    // In browser, also check window object for runtime injection
+    if (typeof window !== 'undefined' && !val) {
+        val = (window as any)[key];
+    }
+
     return (val && val !== "undefined" && val !== "YOUR_KEY" && val !== "") ? val : undefined;
 };
 
