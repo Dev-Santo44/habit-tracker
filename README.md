@@ -6,7 +6,7 @@
 
 **Quantified Self** is a high-performance, personalized productivity dashboard designed for the modern "Commander." Track your habits, manage complex missions, and visualize your progress with a premium, glassmorphic interface.
 
-![Quantified Self Dashboard](https://github.com/USER_NAME/REPO_NAME/raw/main/public/dashboard.png)
+![Quantified Self Dashboard](https://github.com/Dev-Santo44/habit-tracker/raw/main/public/dashboard.png)
 
 ## 🚀 Features
 
@@ -32,7 +32,7 @@
 
 ### 2. Installation
 ```bash
-git clone https://github.com/USER_NAME/REPO_NAME.git
+git clone https://github.com/Dev-Santo44/habit-tracker.git
 cd quantified-self
 npm install
 ```
