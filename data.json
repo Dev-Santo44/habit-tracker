@@ -1,0 +1,86 @@
+{
+  "habits": [
+    {
+      "name": "Test Habit",
+      "icon": "target",
+      "color": "#6366f1",
+      "id": "p7zqwd3qt",
+      "completedDates": [],
+      "streak": 0
+    },
+    {
+      "name": "Daily Walk",
+      "icon": "target",
+      "color": "#6366f1",
+      "id": "9x2qbcvhd",
+      "completedDates": [],
+      "streak": 0
+    },
+    {
+      "name": "drink",
+      "icon": "target",
+      "color": "#6366f1",
+      "id": "qph20kewg",
+      "completedDates": [],
+      "streak": 0
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Test Task",
+      "category": "routine",
+      "id": "k37ln0rpt",
+      "completed": false,
+      "dueDate": "2025-12-30"
+    },
+    {
+      "title": "Persistent Task",
+      "category": "routine",
+      "id": "gioebbc3i",
+      "completed": false,
+      "dueDate": "2025-12-30"
+    },
+    {
+      "title": "New Task from AI",
+      "category": "routine",
+      "id": "w9xugvknj",
+      "completed": false,
+      "dueDate": "2025-12-30"
+    },
+    {
+      "title": "abcd",
+      "category": "routine",
+      "id": "rf0z5qkub",
+      "completed": false,
+      "dueDate": "2025-12-30"
+    },
+    {
+      "title": "Today Objective",
+      "category": "routine",
+      "id": "j9pxvovly",
+      "completed": false,
+      "dueDate": "2025-12-30"
+    },
+    {
+      "title": "Future Objective",
+      "category": "routine",
+      "id": "0j5ntwstn",
+      "completed": false,
+      "dueDate": "2025-12-31"
+    }
+  ],
+  "workflowTasks": [
+    {
+      "title": "billing app",
+      "id": "72hona6pf",
+      "status": "NOT_STARTED",
+      "createdAt": "2025-12-31T12:38:57.005Z"
+    },
+    {
+      "title": "portfolio",
+      "id": "h1dp420g3",
+      "status": "NOT_STARTED",
+      "createdAt": "2025-12-31T12:38:57.005Z"
+    }
+  ]
+}
