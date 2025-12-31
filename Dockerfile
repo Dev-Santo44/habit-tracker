@@ -32,6 +32,9 @@ ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN echo "Building with Firebase API Key passed to build..."
 
+# If firebase_secrets exists (from GitHub Actions), move it to .env.production
+RUN [ -f firebase_secrets ] && mv firebase_secrets .env.production || true
+
 RUN npm run build
 
 # Production image, copy all the files and run next
