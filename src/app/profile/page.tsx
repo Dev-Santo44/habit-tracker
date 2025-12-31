@@ -51,7 +51,7 @@ export default function ProfilePage() {
     }, [mounted, loading, user, router]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !db) return;
 
         const settingsRef = doc(db, 'users', user.uid, 'settings', 'preferences');
         const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
@@ -67,7 +67,7 @@ export default function ProfilePage() {
     }, [user]);
 
     const toggleSetting = async (key: string, value: boolean) => {
-        if (!user) return;
+        if (!user || !db) return;
         const settingsRef = doc(db, 'users', user.uid, 'settings', 'preferences');
         try {
             await setDoc(settingsRef, { [key]: value }, { merge: true });

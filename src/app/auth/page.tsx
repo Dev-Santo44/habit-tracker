@@ -27,6 +27,10 @@ export default function AuthPage() {
         setError(null);
 
         try {
+            if (!auth) {
+                setError("Authentication service is unavailable.");
+                return;
+            }
             if (isLogin) {
                 await signInWithEmailAndPassword(auth, email, password);
             } else {

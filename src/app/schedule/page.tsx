@@ -49,7 +49,7 @@ export default function SchedulePage() {
     }, [mounted, authLoading, user, router]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !db) return;
 
         const tasksRef = collection(db, 'users', user.uid, 'tasks');
         const unsubscribe = onSnapshot(tasksRef, (snapshot) => {
@@ -60,7 +60,7 @@ export default function SchedulePage() {
     }, [user]);
 
     const toggleTask = async (taskId: string) => {
-        if (!user) return;
+        if (!user || !db) return;
         const task = localTasks.find(t => t.id === taskId);
         if (!task) return;
 
@@ -70,13 +70,13 @@ export default function SchedulePage() {
     };
 
     const deleteTask = async (taskId: string) => {
-        if (!user) return;
+        if (!user || !db) return;
         await deleteDoc(doc(db, 'users', user.uid, 'tasks', taskId));
     };
 
     const submitNewTask = async (e?: React.FormEvent) => {
         e?.preventDefault();
-        if (newTaskTitle.trim() && user) {
+        if (newTaskTitle.trim() && user && db) {
             await addDoc(collection(db, 'users', user.uid, 'tasks'), {
                 title: newTaskTitle,
                 category: 'routine',

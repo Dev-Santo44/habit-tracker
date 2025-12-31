@@ -61,7 +61,7 @@ export default function WorkflowPage() {
     }, [mounted, authLoading, user, router]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !db) return;
 
         const workflowRef = collection(db, 'users', user.uid, 'workflowTasks');
         const unsubscribe = onSnapshot(workflowRef, (snapshot) => {
@@ -72,14 +72,14 @@ export default function WorkflowPage() {
     }, [user]);
 
     const moveTask = async (taskId: string, newStatus: string) => {
-        if (!user) return;
+        if (!user || !db) return;
         await updateDoc(doc(db, 'users', user.uid, 'workflowTasks', taskId), {
             status: newStatus
         });
     };
 
     const deleteTask = async (taskId: string) => {
-        if (!user) return;
+        if (!user || !db) return;
         await deleteDoc(doc(db, 'users', user.uid, 'workflowTasks', taskId));
     };
 
@@ -98,22 +98,23 @@ export default function WorkflowPage() {
     };
 
     const submitNewTask = async (status: string) => {
-        if (newTaskTitle.trim() && user) {
+        if (newTaskTitle.trim() && user && db) {
+            const firestore = db;
             const titles = newTaskTitle.split('\n').map(t => t.trim()).filter(t => t !== '');
 
             if (titles.length > 1) {
-                const batch = writeBatch(db);
+                const batch = writeBatch(firestore);
                 titles.forEach(title => {
-                    const newDocRef = doc(collection(db, 'users', user.uid, 'workflowTasks'));
+                    const newDocRef = doc(collection(firestore, 'users', user.uid, 'workflowTasks'));
                     batch.set(newDocRef, {
                         title,
                         status,
-                        createdAt: new Date().toISOString() // Using string for consistency with existing UI
+                        createdAt: new Date().toISOString()
                     });
                 });
                 await batch.commit();
             } else if (titles.length === 1) {
-                await addDoc(collection(db, 'users', user.uid, 'workflowTasks'), {
+                await addDoc(collection(firestore, 'users', user.uid, 'workflowTasks'), {
                     title: titles[0],
                     status,
                     createdAt: new Date().toISOString()

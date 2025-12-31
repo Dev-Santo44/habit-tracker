@@ -39,7 +39,7 @@ export default function AnalysisPage() {
     }, [mounted, authLoading, user, router]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !db) return;
 
         const habitsRef = collection(db, 'users', user.uid, 'habits');
         const unsubscribe = onSnapshot(habitsRef, (snapshot) => {

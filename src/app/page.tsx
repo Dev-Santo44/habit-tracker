@@ -71,7 +71,7 @@ export default function Dashboard() {
   }, [mounted, authLoading, user, router]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) return;
 
     const habitsRef = collection(db, 'users', user.uid, 'habits');
     const tasksRef = collection(db, 'users', user.uid, 'tasks');
@@ -112,7 +112,7 @@ export default function Dashboard() {
   };
 
   const toggleHabit = async (habitId: string) => {
-    if (!user) return;
+    if (!user || !db) return;
     const habit = localHabits.find(h => h.id === habitId);
     if (!habit) return;
 
@@ -129,7 +129,7 @@ export default function Dashboard() {
   };
 
   const toggleTask = async (taskId: string) => {
-    if (!user) return;
+    if (!user || !db) return;
     const task = localTasks.find(t => t.id === taskId);
     if (!task) return;
 
@@ -139,13 +139,13 @@ export default function Dashboard() {
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!user) return;
+    if (!user || !db) return;
     await deleteDoc(doc(db, 'users', user.uid, 'tasks', taskId));
   };
 
   const submitNewTask = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (newTaskTitle.trim() && user) {
+    if (newTaskTitle.trim() && user && db) {
       await addDoc(collection(db, 'users', user.uid, 'tasks'), {
         title: newTaskTitle,
         category: 'routine',
@@ -160,7 +160,7 @@ export default function Dashboard() {
 
   const submitNewHabit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (newHabitName.trim() && user) {
+    if (newHabitName.trim() && user && db) {
       await addDoc(collection(db, 'users', user.uid, 'habits'), {
         name: newHabitName,
         icon: 'target',
