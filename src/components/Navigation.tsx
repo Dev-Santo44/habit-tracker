@@ -31,13 +31,10 @@ const navItems = [
 export default function Navigation() {
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
 
-    const handleLogout = async () => {
-        await logout();
-        router.push('/auth');
-    };
+
 
     return (
         <nav className="relative z-50">
@@ -71,15 +68,8 @@ export default function Navigation() {
                         </Link>
                     ))}
 
-                    {user ? (
-                        <button
-                            onClick={handleLogout}
-                            className="text-sm font-medium text-slate-400 hover:text-red-400 transition-all flex items-center gap-2"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Sign Out
-                        </button>
-                    ) : (
+
+                    {!user && (
                         <Link
                             href="/auth"
                             className="text-sm font-medium text-primary hover:text-white transition-all flex items-center gap-2"
@@ -153,13 +143,7 @@ export default function Navigation() {
 
                             <div className="mt-auto space-y-4">
                                 {user && (
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-red-500/10 text-red-500 font-bold border border-red-500/20"
-                                    >
-                                        <LogOut className="w-5 h-5" />
-                                        Sign Out
-                                    </button>
+                                    <div className="w-full"></div>
                                 )}
 
                                 <div className="p-6 rounded-[2rem] bg-linear-to-br from-primary/10 to-transparent border border-white/5">

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
+import { useUserStats } from '@/hooks/useUserStats';
+import { XP_PER_LEVEL } from '@/lib/gamification';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -21,15 +23,9 @@ import {
     Bell,
     Palette,
     Eye,
-    Activity
+    Activity,
+    LogOut
 } from 'lucide-react';
-
-const achievements = [
-    { id: 1, name: 'Consistency King', icon: Flame, color: '#f472b6', description: 'Maintained a 7-day habit streak.', unlocked: true },
-    { id: 2, name: 'Task Master', icon: CheckCircle2, color: '#8b5cf6', description: 'Completed 100 total tasks.', unlocked: true },
-    { id: 3, name: 'Early Bird', icon: Star, color: '#fbbf24', description: 'Completed a habit before 8 AM.', unlocked: true },
-    { id: 4, name: 'Transcendence', icon: Zap, color: '#2dd4bf', description: 'Reached 100% daily synchronization.', unlocked: false },
-];
 
 export default function ProfilePage() {
     const [mounted, setMounted] = useState(false);
@@ -37,18 +33,31 @@ export default function ProfilePage() {
     const [showParticles, setShowParticles] = useState(true);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-    const { user, loading } = useAuth();
+    const { user, loading: authLoading, logout } = useAuth();
+    const { level, xp, consistency, progressToNextLevel, totalHabitsCompleted, totalTasksCompleted, nextLevelXp } = useUserStats();
     const router = useRouter();
+
+    const handleLogout = async () => {
+        await logout();
+        router.push('/auth');
+    };
+
+    const achievements = [
+        { id: 1, name: 'Consistency King', icon: Flame, color: '#f472b6', description: 'Maintained excellent habit consistency.', unlocked: consistency > 80 },
+        { id: 2, name: 'Task Master', icon: CheckCircle2, color: '#8b5cf6', description: 'Completed 100 total tasks.', unlocked: totalTasksCompleted >= 100 },
+        { id: 3, name: 'Habit Hero', icon: Star, color: '#fbbf24', description: 'Completed 50 habit repetitions.', unlocked: totalHabitsCompleted >= 50 },
+        { id: 4, name: 'Legendary', icon: Zap, color: '#2dd4bf', description: 'Reached Level 10.', unlocked: level >= 10 },
+    ];
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
     useEffect(() => {
-        if (mounted && !loading && !user) {
+        if (mounted && !authLoading && !user) {
             router.push('/auth');
         }
-    }, [mounted, loading, user, router]);
+    }, [mounted, authLoading, user, router]);
 
     useEffect(() => {
         if (!user || !db) return;
@@ -76,7 +85,7 @@ export default function ProfilePage() {
         }
     };
 
-    if (!mounted || loading) return null;
+    if (!mounted || authLoading) return null;
     if (!user) return null;
 
     return (
@@ -100,7 +109,10 @@ export default function ProfilePage() {
                 )}
             </AnimatePresence>
 
-            <ActivityCanvas activityLevel={0.8} />
+            {/* Pass dynamic activity level primarily based on consistency/recent activity logic if more complex, 
+                for now using a derived value or simple static visual enhancement based on level? 
+                Let's use consistency / 100 for visual flare. */}
+            <ActivityCanvas activityLevel={consistency / 100} />
 
             <div className="max-w-7xl mx-auto space-y-12 relative z-10">
                 <Navigation />
@@ -130,7 +142,7 @@ export default function ProfilePage() {
                             transition={{ delay: 0.2 }}
                         >
                             <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-2">
-                                {user.displayName || 'Commander'} <span className="text-primary text-3xl">Lvl 14</span>
+                                {user.displayName || 'Commander'} <span className="text-primary text-3xl">Lvl {level}</span>
                             </h1>
                             <p className="text-slate-400 text-xl font-medium max-w-xl">
                                 {user.email} • Optimizing the self, one habit at a time.
@@ -138,8 +150,8 @@ export default function ProfilePage() {
                         </motion.div>
 
                         <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                            <span className="px-5 py-2 glass border-white/5 rounded-full text-xs font-bold uppercase tracking-widest text-primary">Initiated: Dec 2025</span>
-                            <span className="px-5 py-2 glass border-white/5 rounded-full text-xs font-bold uppercase tracking-widest text-accent">Consistency: 92%</span>
+                            <span className="px-5 py-2 glass border-white/5 rounded-full text-xs font-bold uppercase tracking-widest text-primary">Initiated: {user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : 'Unknown'}</span>
+                            <span className="px-5 py-2 glass border-white/5 rounded-full text-xs font-bold uppercase tracking-widest text-accent">Consistency: {consistency}%</span>
                         </div>
                     </div>
                 </section>
@@ -182,7 +194,52 @@ export default function ProfilePage() {
                             ))}
                         </div>
                     </section>
+                        {/* Current Level Progress Card */}
+                        <div className="glass p-8 rounded-[2rem] bg-linear-to-br from-primary/10 via-transparent to-accent/5 border-white/5 relative overflow-hidden">
+                            {/* Background Glow */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10" />
 
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none block mb-2">Current Rank</span>
+                                    <div className="flex items-baseline gap-3">
+                                        <h3 className="text-4xl font-black text-white leading-none">Level {level}</h3>
+                                        <span className="text-lg font-medium text-slate-400">
+                                            {level < 5 ? 'Novice' : level < 10 ? 'Adept' : level < 20 ? 'Expert' : 'Master'}
+                                        </span> 
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none block mb-2">Next Milestone</span>
+                                    <h3 className="text-2xl font-bold text-primary opacity-80 leading-none">Level {level + 1}</h3>
+                                </div>
+                            </div>
+
+                            {/* Progress Bar Container */}
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500">
+                                    <span className="flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-primary" />
+                                        Progress
+                                    </span>
+                                    <span>{Math.round(progressToNextLevel)}%</span>
+                                </div>
+                                <div className="h-6 bg-slate-900/50 rounded-full overflow-hidden p-1 border border-white/5 backdrop-blur-sm">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${progressToNextLevel}%` }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                        className="h-full rounded-full bg-linear-to-r from-primary to-accent shadow-[0_0_20px_rgba(139,92,246,0.3)] relative"
+                                    >
+                                        <div className="absolute inset-0 bg-linear-to-b from-white/20 to-transparent" />
+                                    </motion.div>
+                                </div>
+                                <div className="flex justify-between text-sm font-medium pt-1">
+                                    <span className="text-slate-300 font-bold">{Math.floor(xp % XP_PER_LEVEL)} <span className="text-slate-500 font-normal">XP Earned</span></span>
+                                    <span className="text-slate-500">{XP_PER_LEVEL - Math.floor(xp % XP_PER_LEVEL)} XP required</span>
+                                </div>
+                            </div>
+                        </div>
                     {/* Quick Settings & Prefs */}
                     <section className="space-y-8">
                         <h2 className="text-2xl md:text-3xl font-black flex items-center gap-4">
@@ -263,31 +320,22 @@ export default function ProfilePage() {
                             <button className="w-full py-5 bg-white/5 hover:bg-white/10 rounded-[1.5rem] text-xs font-black uppercase tracking-widest transition-all border border-white/5 text-slate-400">
                                 Export Experience Data
                             </button>
+
+                            <button
+                                onClick={handleLogout}
+                                className="w-full py-5 bg-red-500/10 hover:bg-red-500/20 rounded-[1.5rem] text-xs font-black uppercase tracking-widest transition-all border border-red-500/20 text-red-400 flex items-center justify-center gap-2"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Sign Out
+                            </button>
                         </div>
 
                         {/* Current Level Progress Card */}
-                        <div className="glass p-8 rounded-[2rem] bg-linear-to-br from-primary/10 to-transparent border-white/5 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <Activity className="w-6 h-6 text-primary" />
-                                <span className="text-xs font-bold text-slate-500 uppercase">Lv 14 Progress</span>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm font-bold">
-                                    <span>4,250 XP</span>
-                                    <span className="text-slate-500">750 to Alpha</span>
-                                </div>
-                                <div className="w-full bg-slate-800/50 h-2 rounded-full overflow-hidden">
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: '85%' }}
-                                        className="h-full bg-primary shadow-[0_0_15px_rgba(139,92,246,0.5)]"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                        
                     </section>
                 </div>
-            </div>
-        </main>
+            </div >
+        </main >
     );
 }
+

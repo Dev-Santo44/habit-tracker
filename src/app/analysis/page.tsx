@@ -1,29 +1,31 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn, formatDate } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { useUserStats } from '@/hooks/useUserStats';
+import { useRouter } from 'next/navigation';
 import ActivityCanvas from '@/components/ActivityCanvas';
 import Navigation from '@/components/Navigation';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
     TrendingUp,
-    Trophy,
-    Flame,
     Zap,
-    ArrowLeft,
-    Calendar,
     Star
 } from 'lucide-react';
 
 export default function AnalysisPage() {
     const [mounted, setMounted] = useState(false);
-    const [localHabits, setLocalHabits] = useState<any[]>([]);
-    const [today] = useState(formatDate(new Date()));
+
+    // Use the central hook for data
+    const {
+        habits,
+        tasks,
+        consistency,
+        totalHabitsCompleted,
+        totalTasksCompleted,
+        loading: statsLoading
+    } = useUserStats();
 
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
@@ -38,39 +40,35 @@ export default function AnalysisPage() {
         }
     }, [mounted, authLoading, user, router]);
 
-    useEffect(() => {
-        if (!user || !db) return;
-
-        const habitsRef = collection(db, 'users', user.uid, 'habits');
-        const unsubscribe = onSnapshot(habitsRef, (snapshot) => {
-            setLocalHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        });
-
-        return () => unsubscribe();
-    }, [user]);
-
-    const totalCompletions = localHabits.reduce((acc, h) => acc + (h.completedDates?.length || 0), 0);
-    const totalHabitsCount = localHabits.length;
-    const completedTodayCount = localHabits.filter(h => h.completedDates?.includes(today)).length;
-    const progressPercentage = totalHabitsCount > 0 ? (completedTodayCount / totalHabitsCount) * 100 : 0;
-
+    // Derived metrics for chart
     const getDayCompletions = () => {
         const counts: Record<string, number> = {};
-        localHabits.forEach(h => {
+
+        // Count habit completions
+        habits.forEach(h => {
             h.completedDates?.forEach((d: string) => {
                 const dayName = new Date(d).toLocaleDateString('en-US', { weekday: 'long' });
                 counts[dayName] = (counts[dayName] || 0) + 1;
             });
         });
+
+        // Count task completions? 
+        // Tasks have a 'dueDate' but we don't strictly track *when* they were checked off in this simple model, 
+        // usually we assume they are completed on their due date or today. 
+        // For now, let's stick to habit trends for the "Weekly Distribution" to match the description "habit completion frequency".
+
         return counts;
     };
 
     const dayCounts = getDayCompletions();
     const sortedDays = Object.entries(dayCounts).sort((a, b) => b[1] - a[1]);
     const peakDay = sortedDays[0]?.[0] || 'TBD';
-    const consistency = totalHabitsCount > 0 ? Math.round((totalCompletions / totalHabitsCount) * 10) / 10 : 0;
 
-    if (!mounted) return null;
+    const lifetimeTranscendences = totalHabitsCompleted + totalTasksCompleted;
+
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    if (!mounted || authLoading || statsLoading) return null;
 
     return (
         <main className="min-h-screen relative bg-background text-foreground p-4 md:p-8 lg:p-12 selection:bg-primary/30">
@@ -81,7 +79,7 @@ export default function AnalysisPage() {
                 <div className="blob bottom-[-10%] left-[20%] bg-accent/20" style={{ animationDuration: '35s' }} />
             </div>
 
-            <ActivityCanvas activityLevel={progressPercentage / 100} />
+            <ActivityCanvas activityLevel={consistency / 100} />
 
             <div className="max-w-7xl mx-auto space-y-12 relative z-10">
                 <Navigation />
@@ -116,9 +114,9 @@ export default function AnalysisPage() {
                             </div>
                             <div>
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Consistency Index</span>
-                                <h3 className="text-3xl font-black text-primary">{consistency}</h3>
+                                <h3 className="text-3xl font-black text-primary">{consistency}%</h3>
                             </div>
-                            <p className="text-slate-400 text-sm font-medium">Average completions per registered habit across your lifetime.</p>
+                            <p className="text-slate-400 text-sm font-medium">Global habit completion rate calculated across all active objectives.</p>
                         </div>
                     </motion.div>
 
@@ -131,9 +129,9 @@ export default function AnalysisPage() {
                             </div>
                             <div>
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Lifetime Transcendences</span>
-                                <h3 className="text-3xl font-black text-secondary">{totalCompletions}</h3>
+                                <h3 className="text-3xl font-black text-secondary">{lifetimeTranscendences}</h3>
                             </div>
-                            <p className="text-slate-400 text-sm font-medium">The sum of every positive action taken since initialization.</p>
+                            <p className="text-slate-400 text-sm font-medium">The sum of every positive action (Habits + Tasks) taken since initialization.</p>
                         </div>
                     </motion.div>
                 </section>
@@ -150,13 +148,13 @@ export default function AnalysisPage() {
                     </div>
 
                     <div className="aspect-16/9 md:aspect-auto md:h-64 flex items-end justify-between gap-2 md:gap-4 px-2">
-                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+                        {daysOfWeek.map((day) => {
                             const count = dayCounts[day] || 0;
                             const maxCount = sortedDays[0]?.[1] || 1;
-                            const height = (count / maxCount) * 100;
+                            const height = maxCount > 0 ? (count / maxCount) * 100 : 0;
                             return (
                                 <div key={day} className="flex-grow flex flex-col items-center gap-4 group">
-                                    <div className="w-full relative flex items-end justify-center">
+                                    <div className="w-full relative flex items-end justify-center h-full">
                                         <motion.div
                                             initial={{ height: 0 }}
                                             animate={{ height: `${height}%` }}
