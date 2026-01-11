@@ -31,7 +31,9 @@ import {
   X,
   Zap,
   Star,
-  Target
+  Target,
+  MoreVertical,
+  Edit2
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -48,6 +50,9 @@ export default function Dashboard() {
   const [showTaskInput, setShowTaskInput] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
   const [showHabitInput, setShowHabitInput] = useState(false);
+  const [activeMenuHabitId, setActiveMenuHabitId] = useState<string | null>(null);
+  const [editingHabit, setEditingHabit] = useState<any | null>(null);
+  const [editHabitName, setEditHabitName] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -141,6 +146,32 @@ export default function Dashboard() {
   const deleteTask = async (taskId: string) => {
     if (!user || !db) return;
     await deleteDoc(doc(db, 'users', user.uid, 'tasks', taskId));
+  };
+
+  const deleteHabit = async (habitId: string) => {
+    if (!user || !db) return;
+    if (confirm('Are you sure you want to delete this habit?')) {
+      await deleteDoc(doc(db, 'users', user.uid, 'habits', habitId));
+      setActiveMenuHabitId(null);
+    }
+  };
+
+  const startEditingHabit = (habit: any) => {
+    setEditingHabit(habit);
+    setEditHabitName(habit.name);
+    setActiveMenuHabitId(null);
+  };
+
+  const updateHabit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !db || !editingHabit || !editHabitName.trim()) return;
+
+    await updateDoc(doc(db, 'users', user.uid, 'habits', editingHabit.id), {
+      name: editHabitName
+    });
+
+    setEditingHabit(null);
+    setEditHabitName('');
   };
 
   const submitNewTask = async (e?: React.FormEvent) => {
@@ -247,6 +278,54 @@ export default function Dashboard() {
           </AnimatePresence>
         </header>
 
+        {/* Edit Modal */}
+        <AnimatePresence>
+          {editingHabit && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4"
+              onClick={() => setEditingHabit(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-slate-900 border border-white/10 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl"
+                onClick={e => e.stopPropagation()}
+              >
+                <h3 className="text-xl font-bold">Edit Habit</h3>
+                <form onSubmit={updateHabit} className="space-y-4">
+                  <input
+                    type="text"
+                    value={editHabitName}
+                    onChange={(e) => setEditHabitName(e.target.value)}
+                    className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 outline-hidden focus:ring-2 focus:ring-primary/50 text-white"
+                    placeholder="Habit name..."
+                    autoFocus
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setEditingHabit(null)}
+                      className="px-4 py-2 rounded-xl text-slate-400 hover:bg-slate-800 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-primary rounded-xl text-white font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 md:gap-12">
           <section className="xl:col-span-2 space-y-8">
             <h2 className="text-2xl md:text-3xl font-black flex items-center gap-4">
@@ -277,16 +356,63 @@ export default function Dashboard() {
                           </div>
                           <h4 className="font-black text-lg md:text-xl">{habit.name}</h4>
                         </div>
-                        <button
-                          onClick={() => toggleHabit(habit.id)}
-                          className={cn(
-                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
-                            isCompleted ? "bg-primary text-white shadow-lg shadow-primary/40" : "bg-slate-800 text-slate-500"
-                          )}
-                        >
-                          <CheckCircle2 className={cn("w-6 h-6 transition-transform", isCompleted ? "scale-100" : "scale-0")} />
-                          {!isCompleted && <div className="w-4 h-4 rounded-full border-2 border-slate-600" />}
-                        </button>
+
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuHabitId(activeMenuHabitId === habit.id ? null : habit.id);
+                              }}
+                              className="p-2 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+
+                            <AnimatePresence>
+                              {activeMenuHabitId === habit.id && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                  className="absolute right-0 top-full mt-2 z-10 bg-slate-900 border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[140px]"
+                                >
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      startEditingHabit(habit);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors text-left"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteHabit(habit.id);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+
+                          <button
+                            onClick={() => toggleHabit(habit.id)}
+                            className={cn(
+                              "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
+                              isCompleted ? "bg-primary text-white shadow-lg shadow-primary/40" : "bg-slate-800 text-slate-500"
+                            )}
+                          >
+                            <CheckCircle2 className={cn("w-6 h-6 transition-transform", isCompleted ? "scale-100" : "scale-0")} />
+                            {!isCompleted && <div className="w-4 h-4 rounded-full border-2 border-slate-600" />}
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   );
